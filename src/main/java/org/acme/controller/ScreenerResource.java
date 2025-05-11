@@ -33,6 +33,7 @@ public class ScreenerResource {
             //Return form not found template
             return null;
         }
-        return screener.data("form", form);
+
+        return screener.data("form", form).data("screenerName", screenerName);
     }
 }

@@ -1,9 +1,7 @@
 package org.acme.controller;
 
 import jakarta.inject.Inject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.acme.repository.DmnModelRepository;
 import org.acme.service.DmnService;
@@ -22,17 +20,13 @@ public class DecisionResource {
     @Inject
     DmnService dmnService;
 
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, Object> get() {
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Map<String, Object> post(Map<String, Object> data) {
 
-        InputStream inputStream = dmnModelRepository.getDmnModel("dish");
+        InputStream inputStream = dmnModelRepository.getDmnModel((String) data.get("screenerName"));
 
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("season", "Winter");
-        variables.put("guestCount", 8);
-
-        List<Map<String, Object>> result = dmnService.evaluateDecision(inputStream, variables);
+        List<Map<String, Object>> result = dmnService.evaluateDecision(inputStream, data);
 
         if (result.size() > 0){
             return result.getFirst();
@@ -40,8 +34,5 @@ public class DecisionResource {
         else {
             return null;
         }
-
-
     }
-
 }
