@@ -1,5 +1,7 @@
 package org.acme.repository;
 
+import org.acme.model.Form;
+
 public interface FormModelRepository {
-    public String getFormModal(String name);
+    public Form getFormModel(String name);
 }
