@@ -1,7 +1,6 @@
-package org.acme.service.impl;
+package org.acme.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import org.acme.service.DmnService;
 import org.camunda.bpm.dmn.engine.DmnDecision;
 import org.camunda.bpm.dmn.engine.DmnDecisionResult;
 import org.camunda.bpm.dmn.engine.DmnEngine;

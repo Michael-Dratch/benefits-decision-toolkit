@@ -10,6 +10,8 @@ import com.google.firebase.cloud.FirestoreClient;
 import com.google.firebase.cloud.StorageClient;
 import io.quarkus.logging.Log;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +52,7 @@ public class FirebaseUtils {
         }
     }
 
-    public static Optional<byte[]> getFileFromStorage(String filePath) {
+    public static Optional<InputStream> getFileFromStorage(String filePath) {
         try {
             Bucket bucket = StorageClient.getInstance().bucket();
             Blob blob = bucket.get(filePath);
@@ -61,7 +63,7 @@ public class FirebaseUtils {
 
             byte[] data = blob.getContent();
 
-            return Optional.of(data);
+            return Optional.of(new ByteArrayInputStream(data));
 
         } catch (Exception e){
             Log.error("Error fetching file from firebase storage: ", e);

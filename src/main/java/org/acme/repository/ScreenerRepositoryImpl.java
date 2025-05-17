@@ -1,4 +1,4 @@
-package org.acme.repository.impl;
+package org.acme.repository;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,10 +11,10 @@ import org.acme.constants.CollectionNames;
 import org.acme.constants.FieldNames;
 import org.acme.model.Screener;
 
-import org.acme.repository.ScreenerRepository;
 import org.acme.repository.utils.FirebaseUtils;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -49,6 +49,32 @@ public class ScreenerRepositoryImpl implements ScreenerRepository {
             screener.setFormModel(formModel);
         }
         return Optional.of(screener);
+    }
+
+    @Override
+    public Optional<InputStream> getScreenerDmnModelByName(String name) {
+
+        Optional<Map<String, Object>> dataOptional = FirebaseUtils.getFirestoreDocByUniqueField(
+                CollectionNames.SCREENER_COLLECTION,
+                FieldNames.SCREENER_NAME,
+                name);
+
+        if (dataOptional.isEmpty()){
+            return Optional.empty();
+        }
+
+        Map<String, Object> data = dataOptional.get();
+
+        Optional<Boolean> isPublishedOptional = FirebaseUtils.getOptionalField(data, FieldNames.IS_PUBLISHED, Boolean.class);
+        Optional<String> dmnPathOptional = FirebaseUtils.getOptionalField(data, FieldNames.DMN_PATH, String.class);
+
+        if (dmnPathOptional.isEmpty() || isPublishedOptional.isEmpty() || !isPublishedOptional.get()) {
+            return Optional.empty();
+        }
+
+        String dmnPath = dmnPathOptional.get();
+
+        return FirebaseUtils.getFileFromStorage(dmnPath);
     }
 
 

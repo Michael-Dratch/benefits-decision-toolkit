@@ -3,12 +3,11 @@ package org.acme.controller;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-import org.acme.repository.DmnModelRepository;
+import org.acme.repository.ScreenerRepository;
 import org.acme.service.DmnService;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -17,7 +16,7 @@ import java.util.Optional;
 public class DecisionResource {
 
     @Inject
-    DmnModelRepository dmnModelRepository;
+    ScreenerRepository screenerRepository;
 
     @Inject
     DmnService dmnService;
@@ -26,16 +25,16 @@ public class DecisionResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Map<String, Object> post(Map<String, Object> inputData) {
 
-        Optional<byte[]> dmnDataOpt = dmnModelRepository.getDmnModelByName((String) inputData.get("screenerName"));
+        Optional<InputStream> dmnDataOpt = screenerRepository.getScreenerDmnModelByName((String) inputData.get("screenerName"));
 
         if (dmnDataOpt.isEmpty()){
             throw new NotFoundException();
         }
 
-        InputStream dmnFileInputStream = new ByteArrayInputStream(dmnDataOpt.get());
+        InputStream dmnFileInputStream = dmnDataOpt.get();
         List<Map<String, Object>> result = dmnService.evaluateDecision(dmnFileInputStream, inputData);
 
-        if (result.size() > 0){
+        if (!result.isEmpty()){
             return result.getFirst();
         }
 
