@@ -1,7 +1,8 @@
 package org.acme.repository;
 
 import java.io.InputStream;
+import java.util.Optional;
 
 public interface DmnModelRepository {
-    InputStream getDmnModel(String name);
+    Optional<byte[]> getDmnModelByName(String name);
 }

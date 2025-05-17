@@ -2,24 +2,20 @@ package org.acme.repository.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.QueryDocumentSnapshot;
-import com.google.cloud.firestore.QuerySnapshot;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
-import com.google.firebase.cloud.FirestoreClient;
 import com.google.firebase.cloud.StorageClient;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
+import org.acme.constants.CollectionNames;
 import org.acme.constants.FieldNames;
 import org.acme.model.Screener;
 
 import org.acme.repository.ScreenerRepository;
+import org.acme.repository.utils.FirebaseUtils;
 
 import java.io.ByteArrayInputStream;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -29,7 +25,10 @@ public class ScreenerRepositoryImpl implements ScreenerRepository {
     @Override
     public Optional<Screener> getScreenerByName(String name) {
 
-        Optional<Map<String, Object>> dataOptional = getScreenerDataFromFireStore(name);
+        Optional<Map<String, Object>> dataOptional = FirebaseUtils.getFirestoreDocByUniqueField(
+                CollectionNames.SCREENER_COLLECTION,
+                FieldNames.SCREENER_NAME,
+                name);
 
         if (dataOptional.isEmpty()){
             return Optional.empty();
@@ -37,8 +36,8 @@ public class ScreenerRepositoryImpl implements ScreenerRepository {
 
         Map<String, Object> data = dataOptional.get();
 
-        Optional<Boolean> isPublishedOptional = getOptionalField(data, FieldNames.IS_PUBLISHED, Boolean.class);
-        Optional<String> formPathOptional = getOptionalField(data, FieldNames.FORM_PATH, String.class);
+        Optional<Boolean> isPublishedOptional = FirebaseUtils.getOptionalField(data, FieldNames.IS_PUBLISHED, Boolean.class);
+        Optional<String> formPathOptional = FirebaseUtils.getOptionalField(data, FieldNames.FORM_PATH, String.class);
 
         Screener screener = new Screener();
 
@@ -52,28 +51,6 @@ public class ScreenerRepositoryImpl implements ScreenerRepository {
         return Optional.of(screener);
     }
 
-    private Optional<Map<String, Object>> getScreenerDataFromFireStore(String name) {
-        try {
-            Firestore db = FirestoreClient.getFirestore();
-            ApiFuture<QuerySnapshot> query = db.collection("screener")
-                    .whereEqualTo("name", name)
-                    .limit(1)
-                    .get();
-            List<QueryDocumentSnapshot> documents;
-            documents = query.get().getDocuments();
-
-            if (documents.isEmpty()) {
-                return Optional.empty();
-            }
-            QueryDocumentSnapshot document = documents.getFirst();
-
-            return Optional.of(document.getData());
-
-            }catch(Exception e){
-                Log.error("Error fetching screener document from firestore: ", e);
-                return Optional.empty();
-            }
-    }
 
     private static Map<String, Object> getFormModelFromStorage(String filePath) {
         try {
@@ -94,16 +71,6 @@ public class ScreenerRepositoryImpl implements ScreenerRepository {
         } catch (Exception e){
             Log.error("Error fetching form model from firebase storage: ", e);
             return new HashMap<>();
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T> Optional<T> getOptionalField(Map<String, Object> doc, String fieldName, Class<T> clazz) {
-        Object value = doc.get(fieldName);
-        if (clazz.isInstance(value)) {
-            return Optional.of((T) value);
-        } else {
-            return Optional.empty();
         }
     }
 }

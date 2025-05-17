@@ -6,10 +6,12 @@ import jakarta.ws.rs.core.MediaType;
 import org.acme.repository.DmnModelRepository;
 import org.acme.service.DmnService;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Path("/api/decision")
 public class DecisionResource {
@@ -22,17 +24,23 @@ public class DecisionResource {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    public Map<String, Object> post(Map<String, Object> data) {
+    public Map<String, Object> post(Map<String, Object> inputData) {
 
-        InputStream inputStream = dmnModelRepository.getDmnModel((String) data.get("screenerName"));
+        Optional<byte[]> dmnDataOpt = dmnModelRepository.getDmnModelByName((String) inputData.get("screenerName"));
 
-        List<Map<String, Object>> result = dmnService.evaluateDecision(inputStream, data);
+        if (dmnDataOpt.isEmpty()){
+            throw new NotFoundException();
+        }
+
+        InputStream dmnFileInputStream = new ByteArrayInputStream(dmnDataOpt.get());
+        List<Map<String, Object>> result = dmnService.evaluateDecision(dmnFileInputStream, inputData);
 
         if (result.size() > 0){
             return result.getFirst();
         }
+
         else {
-            return null;
+            throw new InternalServerErrorException();
         }
     }
 }

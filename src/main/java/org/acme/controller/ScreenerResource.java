@@ -6,20 +6,32 @@ import jakarta.inject.Inject;
 
 import jakarta.ws.rs.core.Response;
 import org.acme.model.Screener;
-import org.acme.service.ScreenerService;
+import org.acme.repository.ScreenerRepository;
+
+import java.util.Optional;
 
 @Path("/api/screener/{screenerName}")
 public class ScreenerResource {
 
     @Inject
-    ScreenerService screenerService;
+    ScreenerRepository screenerRepository;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response get(@PathParam("screenerName") String screenerName) {
 
-        Screener form = screenerService.getPublishedScreener(screenerName);
+        Optional<Screener> screenerOptional = screenerRepository.getScreenerByName(screenerName);
 
-        return Response.ok(form, MediaType.APPLICATION_JSON).build();
+        String notFoundResponseMessage = String.format("Form %s was not found", screenerName);
+        if (screenerOptional.isEmpty()){
+            throw new NotFoundException(notFoundResponseMessage);
+        }
+
+        Screener screener = screenerOptional.get();
+        if (screener.getFormModel().isEmpty() || !screener.isPublished()) {
+            throw new NotFoundException(notFoundResponseMessage);
+        }
+
+        return Response.ok(screener, MediaType.APPLICATION_JSON).build();
     }
 }
